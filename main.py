@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Path, Query
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -20,15 +20,22 @@ class ModelName(str, Enum):
     lenet = "lenet"
 
 
-fake_item_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
+fake_item_db = [{"item_name": "Foo"},
+                {"item_name": "Bar"},
+                {"item_name": "Baz"}]
 
 
 @app.get("/items/{item_id}")
-async def read_item(item_id: int,
-                    q: Optional[str] = Query(None, min_length=3, max_length=50)):
+async def read_item(
+        *,
+        item_id: int = Path(..., title="The ID of the item to get", le=1000),
+        q: str,
+        size: float = Query(..., gt=0, lt=10.5)
+):
+    results = {"item_id": item_id, "size": size}
     if q:
-        return {"item_id": item_id, "q": q}
-    return {"item_id": item_id}
+        results.update({"q": q})
+    return results
 
 
 @app.get("/items/")
